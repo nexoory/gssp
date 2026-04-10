@@ -6,6 +6,16 @@ import {
 } from 'next';
 import { ParsedUrlQuery } from 'querystring';
 
+/** Context passed to `errorHandler` — same shape units receive, including optional `prevProps`. */
+export type GSSPErrorHandlerContext<
+  Context extends { [key: string]: any },
+  Params extends ParsedUrlQuery = ParsedUrlQuery,
+  Preview extends PreviewData = PreviewData,
+> = GetServerSidePropsContext<Params, Preview> &
+  Context & {
+    prevProps?: Record<string, any>;
+  };
+
 export interface CreateGSSPOptions<
   Context extends { [key: string]: any },
   Params extends ParsedUrlQuery = ParsedUrlQuery,
@@ -16,7 +26,10 @@ export interface CreateGSSPOptions<
   ) =>
     | (GetServerSidePropsContext<Params, Preview> & Context)
     | Promise<GetServerSidePropsContext<Params, Preview> & Context>;
-  errorHandler?: (error: unknown) => void;
+  errorHandler?: (
+    error: unknown,
+    ctx: GSSPErrorHandlerContext<Context, Params, Preview>,
+  ) => void;
 }
 
 export type GSSPStandaloneUnit<
@@ -206,15 +219,19 @@ const createGssp = <
 
   function gssp(...fns: any[]): GetServerSideProps<any, Params, Preview> {
     return async ctx => {
+      let errorCtx = ctx as GSSPErrorHandlerContext<Context, Params, Preview>;
+
       try {
         if (!fns.length) return { props: {} };
 
         const gsspCtx = createContext ? await Promise.resolve(createContext(ctx)) : ctx;
+        errorCtx = gsspCtx as GSSPErrorHandlerContext<Context, Params, Preview>;
 
         let accumulated: Record<string, any> = {};
 
         for (const [i, fn] of fns.entries()) {
           const ctxWithPrev = i === 0 ? gsspCtx : { ...gsspCtx, prevProps: accumulated };
+          errorCtx = ctxWithPrev as GSSPErrorHandlerContext<Context, Params, Preview>;
 
           const result = await fn(ctxWithPrev);
 
@@ -231,7 +248,7 @@ const createGssp = <
 
         return { props: accumulated };
       } catch (error) {
-        errorHandler && errorHandler(error);
+        errorHandler?.(error, errorCtx);
 
         throw error;
       }
