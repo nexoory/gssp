@@ -145,6 +145,7 @@ describe('createGssp', () => {
   it('calls errorHandler then rethrows on thrown errors', async () => {
     const errorHandler = vi.fn();
     const err = new Error('fail');
+    const base = mockCtx();
 
     const gssp = createGssp({
       createContext: ctx => ctx,
@@ -153,8 +154,69 @@ describe('createGssp', () => {
       throw err;
     });
 
-    await expect(gssp(mockCtx() as never)).rejects.toThrow('fail');
-    expect(errorHandler).toHaveBeenCalledWith(err);
+    await expect(gssp(base as never)).rejects.toThrow('fail');
+    expect(errorHandler).toHaveBeenCalledTimes(1);
+    expect(errorHandler).toHaveBeenCalledWith(
+      err,
+      expect.objectContaining({
+        ...base,
+        params: base.params,
+        query: base.query,
+      }),
+    );
+  });
+
+  it('passes ctx with prevProps to errorHandler when a chained unit throws', async () => {
+    const errorHandler = vi.fn();
+    const err = new Error('fail in chain');
+
+    const gssp = createGssp({
+      createContext: ctx => ({ ...ctx, tag: 'ctx' as const }),
+      errorHandler,
+    })(
+      async () => ({ props: { a: 1 } }),
+      async ctx => {
+        expect(ctx.prevProps).toEqual({ a: 1 });
+        throw err;
+      },
+    );
+
+    await expect(gssp(mockCtx() as never)).rejects.toThrow('fail in chain');
+    expect(errorHandler).toHaveBeenCalledWith(
+      err,
+      expect.objectContaining({
+        tag: 'ctx',
+        prevProps: { a: 1 },
+      }),
+    );
+  });
+
+  it('returns notFound from errorHandler without rethrowing', async () => {
+    const gssp = createGssp({
+      createContext: ctx => ctx,
+      errorHandler: () => ({ notFound: true as const }),
+    })(async () => {
+      throw new Error('fail');
+    });
+
+    const result = await gssp(mockCtx() as never);
+    expect(result).toEqual({ notFound: true });
+  });
+
+  it('returns redirect from errorHandler without rethrowing', async () => {
+    const gssp = createGssp({
+      createContext: ctx => ctx,
+      errorHandler: () => ({
+        redirect: { destination: '/login', permanent: false },
+      }),
+    })(async () => {
+      throw new Error('fail');
+    });
+
+    const result = await gssp(mockCtx() as never);
+    expect(result).toEqual({
+      redirect: { destination: '/login', permanent: false },
+    });
   });
 
   it('resolves props when they are a Promise', async () => {
