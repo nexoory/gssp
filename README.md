@@ -9,7 +9,7 @@ Helper for working with `getServerSideProps` in Next.js. It lets you extend the 
 You can extend the execution context with any fields you need. If you omit `createContext`, the standard Next.js context is used as-is.
 
 ```ts
-import createGssp from 'gssp';
+import createGssp from '@nexoory/gssp';
 
 // Build a gssp instance with your own context shape
 const myGssp = createGssp({
@@ -146,7 +146,7 @@ import type { GetServerSideProps } from 'next';
 import createGssp, {
   type GSSPChainedUnit,
   type GSSPStandaloneUnit,
-} from 'gssp';
+} from '@nexoory/gssp';
 
 // Shape of your extended context
 interface MyCustomExtendedContext {
@@ -222,6 +222,6 @@ export const getServerSideProps = customGssp(
 
 ### Other options
 
-- **`errorHandler`** — optional callback invoked when a unit throws; the error is rethrown afterward.
+- **`errorHandler`** — optional callback invoked when a unit throws. By default the error is rethrown after the handler runs. If you prefer to finish the request without propagating the error, the handler may **return** a standard Next.js `getServerSideProps` result, for example `{ notFound: true }` or `{ redirect: { destination: '...', permanent: false } }`. In that case **gssp returns that value** and does **not** rethrow. If the handler returns nothing (`undefined` / void), behavior is unchanged: the exception is rethrown as before.
 
 See tests in `src/gssp.test.ts` for behavior details.

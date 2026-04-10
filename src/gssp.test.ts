@@ -191,6 +191,34 @@ describe('createGssp', () => {
     );
   });
 
+  it('returns notFound from errorHandler without rethrowing', async () => {
+    const gssp = createGssp({
+      createContext: ctx => ctx,
+      errorHandler: () => ({ notFound: true as const }),
+    })(async () => {
+      throw new Error('fail');
+    });
+
+    const result = await gssp(mockCtx() as never);
+    expect(result).toEqual({ notFound: true });
+  });
+
+  it('returns redirect from errorHandler without rethrowing', async () => {
+    const gssp = createGssp({
+      createContext: ctx => ctx,
+      errorHandler: () => ({
+        redirect: { destination: '/login', permanent: false },
+      }),
+    })(async () => {
+      throw new Error('fail');
+    });
+
+    const result = await gssp(mockCtx() as never);
+    expect(result).toEqual({
+      redirect: { destination: '/login', permanent: false },
+    });
+  });
+
   it('resolves props when they are a Promise', async () => {
     const gssp = createGssp({
       createContext: ctx => ctx,

@@ -3,6 +3,7 @@ import {
   GetServerSidePropsContext,
   GetServerSidePropsResult,
   PreviewData,
+  Redirect,
 } from 'next';
 import { ParsedUrlQuery } from 'querystring';
 
@@ -15,7 +16,6 @@ export type GSSPErrorHandlerContext<
   Context & {
     prevProps?: Record<string, any>;
   };
-
 export interface CreateGSSPOptions<
   Context extends { [key: string]: any },
   Params extends ParsedUrlQuery = ParsedUrlQuery,
@@ -29,7 +29,7 @@ export interface CreateGSSPOptions<
   errorHandler?: (
     error: unknown,
     ctx: GSSPErrorHandlerContext<Context, Params, Preview>,
-  ) => void;
+  ) => { redirect: Redirect } | { notFound: true } | void;
 }
 
 export type GSSPStandaloneUnit<
@@ -248,7 +248,11 @@ const createGssp = <
 
         return { props: accumulated };
       } catch (error) {
-        errorHandler?.(error, errorCtx);
+        if (errorHandler) {
+          const result = errorHandler(error, errorCtx);
+
+          if (result) return result;
+        }
 
         throw error;
       }

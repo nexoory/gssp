@@ -1,6 +1,6 @@
 {
   "name": "@nexoory/gssp",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Composable getServerSideProps helper for Next.js Pages Router",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
