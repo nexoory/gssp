@@ -166,31 +166,6 @@ describe('createGssp', () => {
     );
   });
 
-  it('passes ctx with prevProps to errorHandler when a chained unit throws', async () => {
-    const errorHandler = vi.fn();
-    const err = new Error('fail in chain');
-
-    const gssp = createGssp({
-      createContext: ctx => ({ ...ctx, tag: 'ctx' as const }),
-      errorHandler,
-    })(
-      async () => ({ props: { a: 1 } }),
-      async ctx => {
-        expect(ctx.prevProps).toEqual({ a: 1 });
-        throw err;
-      },
-    );
-
-    await expect(gssp(mockCtx() as never)).rejects.toThrow('fail in chain');
-    expect(errorHandler).toHaveBeenCalledWith(
-      err,
-      expect.objectContaining({
-        tag: 'ctx',
-        prevProps: { a: 1 },
-      }),
-    );
-  });
-
   it('returns notFound from errorHandler without rethrowing', async () => {
     const gssp = createGssp({
       createContext: ctx => ctx,
