@@ -1,4 +1,4 @@
-# gssp
+# Pipline system for getServerSideProps
 
 Helper for working with `getServerSideProps` in Next.js. It lets you extend the standard execution context and compose several `getServerSideProps`-compatible functions into a single chain.
 
