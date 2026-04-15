@@ -1,5 +1,7 @@
 # Pipline system for getServerSideProps
 
+[![npm version](https://img.shields.io/npm/v/@nexoory/gssp)](https://www.npmjs.com/package/@nexoory/gssp) [![Tests](https://github.com/nexoory/gssp/actions/workflows/ci.yml/badge.svg)](https://github.com/nexoory/gssp/actions/workflows/ci.yml)
+
 Helper for working with `getServerSideProps` in Next.js. It lets you extend the standard execution context and compose several `getServerSideProps`-compatible functions into a single chain.
 
 ## Usage
